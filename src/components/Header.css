@@ -92,11 +92,18 @@
   position: relative;
   font-size: 1.8rem;
   cursor: pointer;
-  transition: transform 0.3s;
+  transition: all 0.3s ease;
+  padding: 0.5rem;
+  border-radius: 8px;
 }
 
 .cart-icon:hover {
-  transform: scale(1.1);
+  transform: scale(1.15);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.cart-icon:active {
+  transform: scale(1.05);
 }
 
 .cart-badge {

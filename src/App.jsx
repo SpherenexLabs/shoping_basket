@@ -238,6 +238,13 @@ function App() {
         onAdminClick={handleAdminClick}
         user={user}
         onLogout={handleLogout}
+        onCartClick={() => {
+          if (cart.length > 0) {
+            setShowPaymentModal(true);
+          } else {
+            showToast('Your cart is empty!', 'error');
+          }
+        }}
       />
       
       <main className="main-content">
