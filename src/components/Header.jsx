@@ -1,7 +1,7 @@
 import React from 'react';
 import './Header.css';
 
-const Header = ({ cartCount, onAdminClick, user, onLogout, onCartClick }) => {
+const Header = ({ cartCount, onAdminClick, user, onLogout }) => {
   return (
     <header className="header">
       <div className="header-container">
@@ -27,7 +27,7 @@ const Header = ({ cartCount, onAdminClick, user, onLogout, onCartClick }) => {
             </button>
           )}
           
-          <div className="cart-icon" onClick={onCartClick} style={{ cursor: 'pointer' }}>
+          <div className="cart-icon">
             <span className="cart-badge">{cartCount}</span>
             🛒
           </div>

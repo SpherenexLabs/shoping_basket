@@ -180,6 +180,91 @@
   font-style: italic;
 }
 
+/* Weight Control Section */
+.weight-control-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.current-weight {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 8px;
+  border-left: 4px solid #0ea5e9;
+}
+
+.current-weight label {
+  font-weight: 600;
+  color: #0c4a6e;
+  font-size: 1rem;
+}
+
+.weight-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0369a1;
+}
+
+.weight-input-group {
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.weight-input {
+  flex: 1;
+  padding: 0.875rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.weight-input:focus {
+  border-color: #4F46E5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.weight-input:disabled {
+  background: #f3f4f6;
+  cursor: not-allowed;
+}
+
+.set-weight-btn {
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+.set-weight-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(16, 185, 129, 0.4);
+}
+
+.set-weight-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.activity-customer {
+  display: block;
+  color: #6b7280;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
 @media (max-width: 768px) {
   .stats-grid,
   .dashboard-grid {
@@ -193,4 +278,13 @@
   .stat-value {
     font-size: 1.5rem;
   }
+
+  .weight-input-group {
+    flex-direction: column;
+  }
+
+  .set-weight-btn {
+    width: 100%;
+  }
 }
+

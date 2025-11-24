@@ -10,8 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@tensorflow-models/coco-ssd": "^2.2.3",
-    "@tensorflow/tfjs": "^4.22.0",
     "firebase": "^12.5.0",
     "html5-qrcode": "^2.3.8",
     "qrcode.react": "^4.2.0",

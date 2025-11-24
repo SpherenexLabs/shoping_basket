@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ref, onValue, set, remove, push } from 'firebase/database';
 import { database } from '../../firebase/firebase';
 import { products as initialProducts } from '../../data/products';
+import ProductCard from '../ProductCard';
+import QRScanner from '../QRScanner';
 import './Inventory.css';
 
 const Inventory = () => {
@@ -10,6 +12,8 @@ const Inventory = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showScanner, setShowScanner] = useState(false);
+  const [viewMode, setViewMode] = useState('cards'); // 'cards' or 'table'
 
   // Initialize Firebase with initial products on first load
   useEffect(() => {
@@ -77,6 +81,29 @@ const Inventory = () => {
     setShowAddModal(true);
   };
 
+  // Handle QR scan to search/highlight product
+  const handleScan = (decodedText) => {
+    try {
+      const parts = String(decodedText).split('|');
+      const scannedId = parts[0]?.trim();
+      const scannedTitle = parts[1]?.trim();
+      
+      if (scannedTitle) {
+        setSearchTerm(scannedTitle);
+        setShowScanner(false);
+      } else if (scannedId) {
+        // Try to find product by index
+        const productIndex = parseInt(scannedId) - 1;
+        if (productIndex >= 0 && productIndex < products.length) {
+          setSearchTerm(products[productIndex].title);
+          setShowScanner(false);
+        }
+      }
+    } catch (error) {
+      console.error('Error handling scan:', error);
+    }
+  };
+
   return (
     <div className="inventory-page">
       <div className="inventory-header">
@@ -89,9 +116,30 @@ const Inventory = () => {
             className="search-input-inv"
           />
         </div>
-        <button className="add-product-btn" onClick={handleAddProduct}>
-          ➕ Add Product
-        </button>
+        <div className="header-actions">
+          {/* <button className="scan-qr-btn-inv" onClick={() => setShowScanner(true)}>
+            📱 Scan QR
+          </button>
+          <div className="view-toggle">
+            <button 
+              className={`toggle-btn ${viewMode === 'cards' ? 'active' : ''}`}
+              onClick={() => setViewMode('cards')}
+              title="Card View"
+            >
+              🎴
+            </button>
+            <button 
+              className={`toggle-btn ${viewMode === 'table' ? 'active' : ''}`}
+              onClick={() => setViewMode('table')}
+              title="Table View"
+            >
+              📋
+            </button>
+          </div> */}
+          <button className="add-product-btn" onClick={handleAddProduct}>
+            ➕ Add Product
+          </button>
+        </div>
       </div>
 
       <div className="inventory-stats">
@@ -115,53 +163,74 @@ const Inventory = () => {
         </div>
       ) : (
         <>
-          <div className="products-grid-inventory">
-            {filteredProducts.map(product => (
-              <div key={product.id} className="inventory-card">
-                <div className="inv-card-image">
-                  <img src={product.image} alt={product.title} />
-                  {product.discount && (
-                    <span className="inv-discount-badge">-{Math.round(((product.price - product.discountPrice) / product.price) * 100)}%</span>
-                  )}
-                </div>
-                
-                <div className="inv-card-content">
-                  <h3>{product.title}</h3>
-                  <p className="inv-category">{product.category}</p>
-                  
-                  <div className="inv-details">
-                    <div className="inv-price">
-                      {product.discount ? (
-                        <>
-                          <span className="inv-original">₹{product.price.toFixed(2)}</span>
-                          <span className="inv-discounted">₹{product.discountPrice.toFixed(2)}</span>
-                        </>
-                      ) : (
-                        <span className="inv-regular">₹{product.price.toFixed(2)}</span>
-                      )}
-                    </div>
-                    
-                    {product.weight && (
-                      <span className="inv-weight">⚖️ {product.weight}</span>
-                    )}
-                  </div>
-
-                  <div className="inv-rating">
-                    {'⭐'.repeat(Math.floor(product.rating))} ({product.rating})
-                  </div>
-
-                  <div className="inv-actions">
-                    <button className="inv-btn-edit" onClick={() => handleEdit(product)}>
+          {viewMode === 'cards' ? (
+            <div className="products-grid-featured">
+              {filteredProducts.map((product, index) => (
+                <div key={product.id} className="product-card-wrapper">
+                  <ProductCard
+                    product={product}
+                    productIndex={index}
+                  />
+                  <div className="admin-card-actions">
+                    <button className="admin-btn-edit" onClick={() => handleEdit(product)}>
                       ✏️ Edit
                     </button>
-                    <button className="inv-btn-delete" onClick={() => handleDelete(product)}>
+                    <button className="admin-btn-delete" onClick={() => handleDelete(product)}>
                       🗑️ Delete
                     </button>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="products-grid-inventory">
+              {filteredProducts.map(product => (
+                <div key={product.id} className="inventory-card">
+                  <div className="inv-card-image">
+                    <img src={product.image} alt={product.title} />
+                    {product.discount && (
+                      <span className="inv-discount-badge">-{Math.round(((product.price - product.discountPrice) / product.price) * 100)}%</span>
+                    )}
+                  </div>
+                  
+                  <div className="inv-card-content">
+                    <h3>{product.title}</h3>
+                    <p className="inv-category">{product.category}</p>
+                    
+                    <div className="inv-details">
+                      <div className="inv-price">
+                        {product.discount ? (
+                          <>
+                            <span className="inv-original">₹{product.price.toFixed(2)}</span>
+                            <span className="inv-discounted">₹{product.discountPrice.toFixed(2)}</span>
+                          </>
+                        ) : (
+                          <span className="inv-regular">₹{product.price.toFixed(2)}</span>
+                        )}
+                      </div>
+                      
+                      {product.weight && (
+                        <span className="inv-weight">⚖️ {product.weight}</span>
+                      )}
+                    </div>
+
+                    <div className="inv-rating">
+                      {'⭐'.repeat(Math.floor(product.rating))} ({product.rating})
+                    </div>
+
+                    <div className="inv-actions">
+                      <button className="inv-btn-edit" onClick={() => handleEdit(product)}>
+                        ✏️ Edit
+                      </button>
+                      <button className="inv-btn-delete" onClick={() => handleDelete(product)}>
+                        🗑️ Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {filteredProducts.length === 0 && (
             <div className="no-products">
@@ -170,6 +239,13 @@ const Inventory = () => {
             </div>
           )}
         </>
+      )}
+
+      {showScanner && (
+        <QRScanner
+          onScan={handleScan}
+          onClose={() => setShowScanner(false)}
+        />
       )}
 
       {showAddModal && (

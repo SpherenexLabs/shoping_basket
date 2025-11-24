@@ -5,17 +5,30 @@ import './Orders.css';
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
-  const [filterStatus, setFilterStatus] = useState('all');
+  // const [filterStatus, setFilterStatus] = useState('all');
 
   useEffect(() => {
+    // Fetch from orders collection
     const ordersRef = ref(database, 'Shopping_Basket/orders');
     onValue(ordersRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
         const ordersArray = Object.entries(data).map(([id, order]) => ({
           id,
-          ...order
+          orderNumber: order.order_id || id,
+          customerId: order.customer_id || 'Unknown',
+          customerName: order.customer_name || `Customer ${order.customer_id || 'Unknown'}`,
+          customerEmail: order.customer_email || 'N/A',
+          items: order.items || 'N/A',
+          totalAmount: parseFloat(order.total_amount) || 0,
+          status: order.status === 'Paid' ? 'Delivered' : (order.status || 'Processing'),
+          createdAt: order.timestamp,
+          paymentMethod: 'Online',
+          actualWeight: order.actual_weight || 'N/A',
+          subtotal: order.subtotal || 0,
+          tax: order.tax || 0
         })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort by newest first
+        
         setOrders(ordersArray);
       } else {
         setOrders([]);
@@ -23,9 +36,11 @@ const Orders = () => {
     });
   }, []);
 
-  const filteredOrders = filterStatus === 'all' 
-    ? orders 
-    : orders.filter(order => order.status?.toLowerCase() === filterStatus);
+  // Show all orders without filtering
+  const filteredOrders = orders;
+  // const filteredOrders = filterStatus === 'all' 
+  //   ? orders 
+  //   : orders.filter(order => order.status?.toLowerCase() === filterStatus);
 
   const getStatusColor = (status) => {
     const statusLower = status?.toLowerCase() || 'pending';
@@ -55,12 +70,11 @@ const Orders = () => {
       <div className="orders-header">
         <div className="filter-buttons">
           <button 
-            className={filterStatus === 'all' ? 'active' : ''}
-            onClick={() => setFilterStatus('all')}
+            className="active"
           >
             All Orders ({orders.length})
           </button>
-          <button 
+          {/* <button 
             className={filterStatus === 'pending' ? 'active' : ''}
             onClick={() => setFilterStatus('pending')}
           >
@@ -77,7 +91,7 @@ const Orders = () => {
             onClick={() => setFilterStatus('delivered')}
           >
             Delivered
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -91,7 +105,6 @@ const Orders = () => {
               <th>Total</th>
               <th>Status</th>
               <th>Date</th>
-              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -101,8 +114,7 @@ const Orders = () => {
                   <td className="order-id">#{order.orderNumber || order.id}</td>
                   <td>
                     <div className="customer-info">
-                      <strong>{order.customerName}</strong>
-                      <span>{order.customerEmail}</span>
+                      <strong>Customer {order.customerId}</strong>
                       {order.customerId && <span className="customer-id">ID: {order.customerId}</span>}
                     </div>
                   </td>
@@ -117,18 +129,11 @@ const Orders = () => {
                     </span>
                   </td>
                   <td>{formatDate(order.createdAt || order.date)}</td>
-                  <td>
-                    <div className="action-buttons">
-                      <button className="btn-view" title="View Details">👁️</button>
-                      <button className="btn-edit" title="Edit">✏️</button>
-                      <button className="btn-delete" title="Delete">🗑️</button>
-                    </div>
-                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="7" className="no-orders">
+                <td colSpan="6" className="no-orders">
                   <div className="empty-state">
                     <span className="empty-icon">📦</span>
                     <p>No orders found</p>

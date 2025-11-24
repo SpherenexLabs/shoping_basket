@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ref, onValue } from 'firebase/database';
+import { ref, onValue, set } from 'firebase/database';
 import { database } from '../../firebase/firebase';
 import './Dashboard.css';
 
@@ -12,6 +12,9 @@ const Dashboard = () => {
   });
 
   const [recentActivity, setRecentActivity] = useState([]);
+  const [currentWeight, setCurrentWeight] = useState('0.00');
+  const [newWeight, setNewWeight] = useState('');
+  const [updatingWeight, setUpdatingWeight] = useState(false);
 
   useEffect(() => {
     // Fetch products count
@@ -30,35 +33,62 @@ const Dashboard = () => {
       setStats(prev => ({ ...prev, totalCustomers: count }));
     });
 
-    // Fetch orders and calculate revenue
+    // Fetch orders from orders collection and calculate revenue
     const ordersRef = ref(database, 'Shopping_Basket/orders');
     onValue(ordersRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        const orders = Object.values(data);
+        const orders = Object.entries(data).map(([id, order]) => ({
+          id,
+          ...order
+        }));
+        
+        // Calculate total revenue from orders
         const revenue = orders.reduce((sum, order) => {
-          return sum + (order.totalAmount || order.total || 0);
+          return sum + (parseFloat(order.total_amount) || 0);
         }, 0);
+        
+        // Count total orders
+        const orderCount = orders.length;
         
         setStats(prev => ({ 
           ...prev, 
-          totalOrders: orders.length,
+          totalOrders: orderCount,
           totalRevenue: revenue
         }));
 
         // Build recent activity from orders
         const activities = orders
-          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
           .slice(0, 5)
-          .map((order, index) => ({
-            id: index,
-            action: `Order ${order.orderNumber} - ₹${order.totalAmount?.toFixed(2)} (${order.paymentMethod})`,
-            time: formatTimeAgo(order.createdAt),
+          .map((order) => ({
+            id: order.id,
+            action: `Order ${order.order_id || 'N/A'} - ₹${parseFloat(order.total_amount || 0).toFixed(2)} (Online)`,
+            time: formatTimeAgo(order.timestamp),
             type: 'order',
-            customer: order.customerName
+            customer: `Customer ${order.customer_id || 'Unknown'}`
           }));
         
         setRecentActivity(activities);
+      } else {
+        setStats(prev => ({ 
+          ...prev, 
+          totalOrders: 0,
+          totalRevenue: 0
+        }));
+        setRecentActivity([]);
+      }
+    });
+
+    // Fetch current Weight value from Firebase
+    const weightRef = ref(database, 'Shopping_Basket/Weight');
+    onValue(weightRef, (snapshot) => {
+      const weight = snapshot.val();
+      console.log('Weight from Firebase:', weight);
+      if (weight !== null && weight !== undefined) {
+        setCurrentWeight(parseFloat(weight).toFixed(2));
+      } else {
+        setCurrentWeight('0');
       }
     });
   }, []);
@@ -78,6 +108,32 @@ const Dashboard = () => {
     return `${days} day${days > 1 ? 's' : ''} ago`;
   };
 
+  const handleSetWeight = async () => {
+    if (!newWeight || newWeight.trim() === '') {
+      alert('Please enter a weight value');
+      return;
+    }
+
+    const weightValue = parseFloat(newWeight);
+    if (isNaN(weightValue)) {
+      alert('Please enter a valid number');
+      return;
+    }
+
+    setUpdatingWeight(true);
+    try {
+      const weightRef = ref(database, 'Shopping_Basket/Weight');
+      await set(weightRef, weightValue);
+      alert(`Weight updated successfully to ${weightValue}`);
+      setNewWeight('');
+    } catch (error) {
+      console.error('Error updating weight:', error);
+      alert('Failed to update weight: ' + error.message);
+    } finally {
+      setUpdatingWeight(false);
+    }
+  };
+
   const statCards = [
     {
       title: 'Total Orders',
@@ -93,13 +149,13 @@ const Dashboard = () => {
       color: '#10B981',
       bgColor: '#D1FAE5'
     },
-    {
-      title: 'Total Customers',
-      value: stats.totalCustomers,
-      icon: '👥',
-      color: '#F59E0B',
-      bgColor: '#FEF3C7'
-    },
+    // {
+    //   title: 'Total Customers',
+    //   value: stats.totalCustomers,
+    //   icon: '👥',
+    //   color: '#F59E0B',
+    //   bgColor: '#FEF3C7'
+    // },
     {
       title: 'Products',
       value: stats.totalProducts,
@@ -126,6 +182,34 @@ const Dashboard = () => {
       </div>
 
       <div className="dashboard-grid">
+        <div className="dashboard-card">
+          <h3>Weight Control</h3>
+          <div className="weight-control-section">
+            <div className="current-weight">
+              <label>Current Weight:</label>
+              <span className="weight-value">{currentWeight} g</span>
+            </div>
+            <div className="weight-input-group">
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Enter new weight (grams)"
+                value={newWeight}
+                onChange={(e) => setNewWeight(e.target.value)}
+                className="weight-input"
+                disabled={updatingWeight}
+              />
+              <button 
+                onClick={handleSetWeight}
+                className="set-weight-btn"
+                disabled={updatingWeight}
+              >
+                {updatingWeight ? 'Updating...' : '⚖️ Set Weight'}
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div className="dashboard-card">
           <h3>Recent Activity</h3>
           <div className="activity-list">

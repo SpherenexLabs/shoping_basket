@@ -16,7 +16,7 @@ const AdminPanel = ({ onLogout, user }) => {
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'orders', label: 'Orders', icon: '📦' },
     { id: 'inventory', label: 'Inventory', icon: '📋' },
-    { id: 'customers', label: 'Customers', icon: '👥' }
+    // { id: 'customers', label: 'Customers', icon: '👥' }
   ];
 
   const renderContent = () => {
@@ -27,8 +27,8 @@ const AdminPanel = ({ onLogout, user }) => {
         return <Orders />;
       case 'inventory':
         return <Inventory />;
-      case 'customers':
-        return <Customers />;
+      // case 'customers':
+      //   return <Customers />;
       default:
         return <Dashboard />;
     }
@@ -56,7 +56,7 @@ const AdminPanel = ({ onLogout, user }) => {
         </nav>
 
         <div className="admin-sidebar-footer">
-          <button 
+          {/* <button 
             className="admin-import-btn" 
             onClick={() => setShowImportProducts(true)}
             style={{
@@ -99,7 +99,7 @@ const AdminPanel = ({ onLogout, user }) => {
           >
             <span>🔄</span>
             <span>Migrate Data</span>
-          </button>
+          </button> */}
           <button className="admin-logout-btn" onClick={onLogout}>
             <span>🚪</span>
             <span>Logout</span>
@@ -120,13 +120,13 @@ const AdminPanel = ({ onLogout, user }) => {
         </div>
       </main>
 
-      {showImportProducts && (
+      {/* {showImportProducts && (
         <ImportProducts onClose={() => setShowImportProducts(false)} />
       )}
 
       {showMigration && (
         <MigrateData onClose={() => setShowMigration(false)} />
-      )}
+      )} */}
     </div>
   );
 };

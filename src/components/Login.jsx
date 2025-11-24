@@ -1,61 +1,32 @@
 import React, { useState } from 'react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebase/firebase';
 import './Login.css';
 
-const Login = ({ onSwitchToRegister, onLoginSuccess }) => {
+const Login = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    // Admin login check
-    if (isAdmin) {
-      if (email === 'admin@gmail.com' && password === 'admin123') {
-        onLoginSuccess({ email, role: 'admin', isAdmin: true });
-        setLoading(false);
-        return;
-      } else {
-        setError('Invalid admin credentials');
-        setLoading(false);
-        return;
-      }
-    }
+    console.log('Login attempt:', { email, password });
 
-    // Customer login with Firebase
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      onLoginSuccess({ 
-        email: userCredential.user.email, 
-        uid: userCredential.user.uid,
-        role: 'customer',
-        isAdmin: false
-      });
-    } catch (error) {
-      switch (error.code) {
-        case 'auth/invalid-email':
-          setError('Invalid email address');
-          break;
-        case 'auth/user-not-found':
-          setError('No account found with this email');
-          break;
-        case 'auth/wrong-password':
-          setError('Incorrect password');
-          break;
-        case 'auth/invalid-credential':
-          setError('Invalid email or password');
-          break;
-        default:
-          setError('Login failed. Please try again.');
-      }
-    } finally {
+    // Admin login check
+    if (email === 'admin@gmail.com' && password === 'admin123') {
+      console.log('Admin credentials matched, calling onLoginSuccess');
+      const userData = { email, role: 'admin', isAdmin: true };
+      console.log('User data:', userData);
+      onLoginSuccess(userData);
       setLoading(false);
+      return;
+    } else {
+      console.log('Invalid credentials');
+      setError('Invalid admin credentials');
+      setLoading(false);
+      return;
     }
   };
 
@@ -64,22 +35,7 @@ const Login = ({ onSwitchToRegister, onLoginSuccess }) => {
       <div className="login-box">
         <div className="login-header">
           <h2>🛍️ Shopping Store</h2>
-          <p>{isAdmin ? 'Admin Login' : 'Customer Login'}</p>
-        </div>
-
-        <div className="login-toggle">
-          <button 
-            className={!isAdmin ? 'active' : ''} 
-            onClick={() => setIsAdmin(false)}
-          >
-            Customer
-          </button>
-          <button 
-            className={isAdmin ? 'active' : ''} 
-            onClick={() => setIsAdmin(true)}
-          >
-            Admin
-          </button>
+          <p>Admin Login</p>
         </div>
 
         <form onSubmit={handleLogin} className="login-form">
@@ -92,7 +48,7 @@ const Login = ({ onSwitchToRegister, onLoginSuccess }) => {
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={isAdmin ? 'admin@gmail.com' : 'Enter your email'}
+              placeholder="Enter your email"
               required
             />
           </div>
@@ -104,7 +60,7 @@ const Login = ({ onSwitchToRegister, onLoginSuccess }) => {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder={isAdmin ? 'admin123' : 'Enter your password'}
+              placeholder="Enter your password"
               required
             />
           </div>
@@ -114,23 +70,13 @@ const Login = ({ onSwitchToRegister, onLoginSuccess }) => {
           </button>
         </form>
 
-        {!isAdmin && (
-          <div className="register-link">
-            <p>Don't have an account? 
-              <button onClick={onSwitchToRegister}>Register here</button>
-            </p>
-          </div>
-        )}
-
-        {isAdmin && (
-          <div className="admin-hint">
-            <p className="hint-text">
-              Admin Credentials:<br />
-              Email: admin@gmail.com<br />
-              Password: admin123
-            </p>
-          </div>
-        )}
+        <div className="admin-hint">
+          <p className="hint-text">
+            Admin Credentials:<br />
+            Email: admin@gmail.com<br />
+            Password: admin123
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -5,7 +5,6 @@ import './App.css'
 import Header from './components/Header'
 import ProductCard from './components/ProductCard'
 import Login from './components/Login'
-import Register from './components/Register'
 import AdminPanel from './components/AdminPanel'
 import QRScanner from './components/QRScanner'
 import PaymentModal from './components/PaymentModal'
@@ -15,9 +14,9 @@ import { useModeController } from './hooks/useModeController'
 function App() {
   const [cart, setCart] = useState([]);
   const [user, setUser] = useState(null);
-  const [showRegister, setShowRegister] = useState(false);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showScanner, setShowScanner] = useState(false);
   const [lastScanId, setLastScanId] = useState('');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [toast, setToast] = useState(null);
@@ -68,8 +67,11 @@ function App() {
   // Check if user is logged in (from localStorage)
   useEffect(() => {
     const savedUser = localStorage.getItem('shopping_user');
+    console.log('Checking localStorage for saved user:', savedUser);
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const parsedUser = JSON.parse(savedUser);
+      console.log('Parsed user from localStorage:', parsedUser);
+      setUser(parsedUser);
     }
   }, []);
 
@@ -90,13 +92,10 @@ function App() {
   }, []);
 
   const handleLoginSuccess = (userData) => {
+    console.log('handleLoginSuccess called with:', userData);
     setUser(userData);
     localStorage.setItem('shopping_user', JSON.stringify(userData));
-  };
-
-  const handleRegisterSuccess = (userData) => {
-    setUser(userData);
-    localStorage.setItem('shopping_user', JSON.stringify(userData));
+    console.log('User state set and saved to localStorage');
   };
 
   const handleLogout = () => {
@@ -207,28 +206,21 @@ function App() {
 
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
 
-  // Show login/register screens if not logged in
+  console.log('Current user state:', user);
+
+  // Show login screen if not logged in (Admin only)
   if (!user) {
-    if (showRegister) {
-      return (
-        <Register 
-          onSwitchToLogin={() => setShowRegister(false)}
-          onRegisterSuccess={handleRegisterSuccess}
-        />
-      );
-    }
-    return (
-      <Login 
-        onSwitchToRegister={() => setShowRegister(true)}
-        onLoginSuccess={handleLoginSuccess}
-      />
-    );
+    console.log('No user, showing login');
+    return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
   // Show Admin Panel if admin is logged in
   if (user.isAdmin) {
+    console.log('User is admin, showing admin panel');
     return <AdminPanel user={user} onLogout={handleLogout} />;
   }
+
+  console.log('Showing customer dashboard');
 
   // Show customer dashboard if logged in
   return (
@@ -238,32 +230,21 @@ function App() {
         onAdminClick={handleAdminClick}
         user={user}
         onLogout={handleLogout}
-        onCartClick={() => {
-          if (cart.length > 0) {
-            setShowPaymentModal(true);
-          } else {
-            showToast('Your cart is empty!', 'error');
-          }
-        }}
       />
       
       <main className="main-content">
         <div className="container">
-          {user && (
-            <p className="welcome-message">
-              Welcome, {user.isAdmin ? 'Admin' : user.fullName || user.email}! 👋
-            </p>
-          )}
-          
-          {/* QR Scanner - Always visible and live streaming */}
-          <QRScanner 
-            user={user}
-            onScan={handleScan}
-          />
-
           <div className="products-header">
             <h2>Featured Products</h2>
             <p>Discover our selection of premium quality products</p>
+            {user && (
+              <p className="welcome-message">
+                Welcome, {user.isAdmin ? 'Admin' : user.fullName || user.email}! 👋
+              </p>
+            )}
+            <button className="scan-qr-btn" onClick={() => setShowScanner(true)}>
+              📱 Scan QR to Order
+            </button>
           </div>
           
           {loading ? (
@@ -288,6 +269,14 @@ function App() {
           )}
         </div>
       </main>
+
+      {showScanner && (
+        <QRScanner 
+          user={user}
+          onScan={handleScan}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
 
       {showPaymentModal && cart.length > 0 && (
         <PaymentModal
